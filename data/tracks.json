@@ -1,0 +1,68 @@
+[
+  {
+    "slug": "algebra-T",
+    "subject": "Álgebra",
+    "R": 5,
+    "classDate": "2025-08-17",
+    "nextIndex": 0,
+    "lastTouched": 0,
+    "avgMinPerAct": 50,
+    "active": true,
+    "doneActs": 0
+  },
+  {
+    "slug": "algebra-P",
+    "subject": "Álgebra",
+    "R": 6,
+    "classDate": "2025-08-20",
+    "nextIndex": 0,
+    "lastTouched": 0,
+    "avgMinPerAct": 50,
+    "active": true,
+    "doneActs": 0
+  },
+  {
+    "slug": "poo-T",
+    "subject": "POO",
+    "R": 1,
+    "classDate": "2025-08-18",
+    "nextIndex": 0,
+    "lastTouched": 0,
+    "avgMinPerAct": 50,
+    "active": true,
+    "doneActs": 0
+  },
+  {
+    "slug": "poo-P",
+    "subject": "POO",
+    "R": 1,
+    "classDate": "2025-08-14",
+    "nextIndex": 0,
+    "lastTouched": 0,
+    "avgMinPerAct": 50,
+    "active": true,
+    "doneActs": 0
+  },
+  {
+    "slug": "calculo-P",
+    "subject": "Cálculo",
+    "R": 1,
+    "classDate": "2025-08-18",
+    "nextIndex": 0,
+    "lastTouched": 0,
+    "avgMinPerAct": 50,
+    "active": true,
+    "doneActs": 0
+  },
+  {
+    "slug": "calculo-T",
+    "subject": "Cálculo",
+    "R": 1,
+    "classDate": "2025-08-21",
+    "nextIndex": 0,
+    "lastTouched": 0,
+    "avgMinPerAct": 50,
+    "active": true,
+    "doneActs": 0
+  }
+]
