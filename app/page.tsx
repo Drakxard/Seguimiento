@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Save, Trash2, Settings, Info, Lightbulb, ArrowLeft, Table, TrendingUp } from "lucide-react"
+import { Plus, Edit, Save, Trash2, Info, Lightbulb, ArrowLeft, Table, TrendingUp } from "lucide-react"
 
 interface Event {
   id: string
@@ -10,6 +10,7 @@ interface Event {
   importance: number
   content: string
   daysRemaining: number
+  totalDays?: number
   isEditing: boolean
 }
 
@@ -27,11 +28,50 @@ export default function EventTrackingSystem() {
   ])
   const [activeTab, setActiveTab] = useState<"table" | "visual">("table")
   const [currentDate, setCurrentDate] = useState("")
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [useLocal, setUseLocal] = useState(false)
 
   useEffect(() => {
+    const allow = window.confirm("¿Permitir acceso a la configuración local?")
+    setUseLocal(allow)
+    if (allow) {
+      const stored = localStorage.getItem("events")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setEvents(parsed)
+        setTimeout(updateAllDaysRemaining, 0)
+      } else {
+        updateAllDaysRemaining()
+        fetch("/api/events")
+          .then((res) => res.json())
+          .then((data) => {
+            if (Array.isArray(data) && data.length) {
+              setEvents(data)
+              setTimeout(updateAllDaysRemaining, 0)
+            }
+          })
+          .catch(() => {})
+      }
+    } else {
+      updateAllDaysRemaining()
+      fetch("/api/events")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length) {
+            setEvents(data)
+            setTimeout(updateAllDaysRemaining, 0)
+          }
+        })
+        .catch(() => {})
+    }
     updateCurrentDate()
-    updateAllDaysRemaining()
   }, [])
+
+  useEffect(() => {
+    if (useLocal) {
+      localStorage.setItem("events", JSON.stringify(events))
+    }
+  }, [events, useLocal])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,10 +127,20 @@ export default function EventTrackingSystem() {
       isEditing: true,
     }
     setEvents([...events, newEvent])
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add", event: newEvent }),
+    })
   }
 
   const removeRow = (id: string) => {
     setEvents(events.filter((event) => event.id !== id))
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", id }),
+    })
   }
 
   const toggleEditRow = (id: string) => {
@@ -114,8 +164,17 @@ export default function EventTrackingSystem() {
         if (event.id === id) {
           const updatedEvent = { ...event, [field]: value }
           if (field === "date" && typeof value === "string" && value) {
-            updatedEvent.daysRemaining = calculateDaysRemaining(value)
+            const days = calculateDaysRemaining(value)
+            updatedEvent.daysRemaining = days
+            if (!event.totalDays) {
+              updatedEvent.totalDays = days
+            }
           }
+          fetch("/api/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "edit", event: updatedEvent }),
+          })
           return updatedEvent
         }
         return event
@@ -127,12 +186,12 @@ export default function EventTrackingSystem() {
     if (!dateString) return ""
     const date = new Date(dateString)
     return date
-      .toLocaleDateString("es-ES", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit",
-      })
-      .replace(",", "")
+    .toLocaleDateString("es-ES", {
+          weekday: "long",
+          day: "2-digit",
+          month: "2-digit",
+        })
+        .replace(",", "")
   }
 
   const getDaysRemainingStyle = (days: number, importance: number) => {
@@ -145,10 +204,16 @@ export default function EventTrackingSystem() {
     }
   }
 
-  const getArrowColor = (days: number) => {
-    if (days <= 3) return "text-red-500"
-    if (days <= 7) return "text-yellow-500"
-    return "text-green-500"
+  const getProgressPercentage = (event: Event) => {
+    if (!event.totalDays || event.totalDays === 0) return 0
+    const percent = ((event.totalDays - event.daysRemaining) / event.totalDays) * 100
+    return Math.max(0, Math.min(100, percent))
+  }
+
+  const getProgressBarColor = (days: number) => {
+    if (days <= 3) return "bg-red-500"
+    if (days <= 7) return "bg-yellow-500"
+    return "bg-green-500"
   }
 
   const getEventCardStyle = (days: number) => {
@@ -195,6 +260,11 @@ export default function EventTrackingSystem() {
     }
   }
 
+  const overallProgress =
+    events.length > 0
+      ? events.reduce((acc, e) => acc + getProgressPercentage(e), 0) / events.length
+      : 0
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
@@ -203,16 +273,19 @@ export default function EventTrackingSystem() {
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                Hoy: <span>{currentDate}</span>
-              </span>
-              <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
+                <span className="text-sm text-gray-500">
+                  Hoy: <span>{currentDate}</span>
+                </span>
+                <button
+                  onClick={() => setShowInstructions(!showInstructions)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       {/* Tab Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -368,19 +441,20 @@ export default function EventTrackingSystem() {
                 </table>
               </div>
 
-              {/* Instructions */}
-              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex">
-                  <Info className="text-blue-400 mt-0.5 mr-3 w-5 h-5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
-                    <p className="mt-1 text-sm text-blue-700">
-                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista
-                      visual. Los días restantes se calculan automáticamente desde la fecha actual.
-                    </p>
+              {showInstructions && (
+                <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex">
+                    <Info className="text-blue-400 mt-0.5 mr-3 w-5 h-5" />
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
+                      <p className="mt-1 text-sm text-blue-700">
+                        Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la
+                        vista visual. Los días restantes se calculan automáticamente desde la fecha actual.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -402,37 +476,47 @@ export default function EventTrackingSystem() {
               <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">Teoría/Práctica</h3>
-                  <span className="text-2xl font-bold text-green-600">100%</span>
+                  <span className="text-2xl font-bold text-green-600">{overallProgress.toFixed(0)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
                     className="h-3 rounded-full bg-gradient-to-r from-green-500 to-green-400"
-                    style={{ width: "100%" }}
+                    style={{ width: `${overallProgress}%` }}
                   ></div>
                 </div>
               </div>
 
-              {/* Arrow Visualization */}
+              {/* Progress Visualization */}
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-6">Visualización de Eventos</h3>
 
-                <div className="space-y-4">
-                  {events.map((event) => (
-                    <div key={event.id} className="flex items-center space-x-4">
-                      <span className="text-sm font-medium text-gray-700 w-32 truncate">
-                        {event.name || "Sin nombre"}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-6 h-6 ${getArrowColor(event.daysRemaining)} transition-all duration-300`}>
-                          →
+                <div className="space-y-6">
+                  {events.map((event) => {
+                    const progress = getProgressPercentage(event)
+                    const color = getProgressBarColor(event.daysRemaining)
+                    return (
+                      <div key={event.id} className="flex items-center space-x-4">
+                        <span className="text-sm font-medium text-gray-700 w-32 truncate">
+                          {event.name || "Sin nombre"}
+                        </span>
+                        <div className="flex items-center space-x-4 w-full">
+                          <div className="flex-1">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className={`h-2 rounded-full ${color}`} style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <span className="text-xs text-gray-500">Teoría</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className={`h-2 rounded-full ${color}`} style={{ width: `${progress}%` }}></div>
+                            </div>
+                            <span className="text-xs text-gray-500">Práctica</span>
+                          </div>
                         </div>
-                        <div className={`w-6 h-6 ${getArrowColor(event.daysRemaining)} transition-all duration-300`}>
-                          →
-                        </div>
+                        <span className="text-xs text-gray-500 ml-4">{event.daysRemaining} días restantes</span>
                       </div>
-                      <span className="text-xs text-gray-500 ml-4">{event.daysRemaining} días restantes</span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Event Details */}
@@ -464,19 +548,20 @@ export default function EventTrackingSystem() {
                 </div>
               </div>
 
-              {/* Instructions */}
-              <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex">
-                  <Lightbulb className="text-green-400 mt-0.5 mr-3 w-5 h-5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-green-800">Vista Visual</h3>
-                    <p className="mt-1 text-sm text-green-700">
-                      Los colores y tamaños de las flechas cambian según la urgencia y días restantes. Usa{" "}
-                      <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + ←</kbd> para volver a la tabla.
-                    </p>
+                {showInstructions && (
+                  <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex">
+                      <Lightbulb className="text-green-400 mt-0.5 mr-3 w-5 h-5" />
+                      <div>
+                        <h3 className="text-sm font-medium text-green-800">Vista Visual</h3>
+                        <p className="mt-1 text-sm text-green-700">
+                          Los colores de las barras cambian según la urgencia y días restantes. Usa{" "}
+                          <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + ←</kbd> para volver a la tabla.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                )}
             </div>
           )}
         </div>
