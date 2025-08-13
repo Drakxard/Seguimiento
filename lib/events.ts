@@ -1,4 +1,4 @@
-export interface Event {
+  export interface Event {
   id: string
   date: string
   name: string
@@ -13,7 +13,7 @@ export interface Event {
 export let events: Event[] = [
   {
     id: "1",
-    date: "2024-08-17",
+    date: "2025-08-17",
     name: "T - Álgebra",
     importance: 2,
     content: "5.1 a 5.6",
@@ -24,7 +24,7 @@ export let events: Event[] = [
   },
   {
     id: "2",
-    date: "2024-08-20",
+    date: "2025-08-20",
     name: "P - Álgebra",
     importance: 2,
     content: "5.1 a 5.6",
@@ -35,7 +35,7 @@ export let events: Event[] = [
   },
   {
     id: "3",
-    date: "2024-08-18",
+    date: "2025-08-18",
     name: "T - Poo",
     importance: 2,
     content: "U1",
@@ -46,7 +46,7 @@ export let events: Event[] = [
   },
   {
     id: "4",
-    date: "2024-08-14",
+    date: "2025-08-14",
     name: "P - Poo",
     importance: 2,
     content: "U1",
@@ -57,7 +57,7 @@ export let events: Event[] = [
   },
   {
     id: "5",
-    date: "2024-08-18",
+    date: "2025-08-18",
     name: "P - Cálculo",
     importance: 2,
     content: "4.1 a 4.3",
@@ -68,7 +68,7 @@ export let events: Event[] = [
   },
   {
     id: "6",
-    date: "2024-08-21",
+    date: "2025-08-21",
     name: "T - Cálculo",
     importance: 2,
     content: "4.1 a 4.3",
