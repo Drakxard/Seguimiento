@@ -42,8 +42,12 @@ export function loadMaterias(): MateriasState {
 }
 
 export function saveMaterias(state: MateriasState) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(state, null, 2));
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(FILE, JSON.stringify(state, null, 2));
+  } catch {
+    // ignore write errors on read-only file systems
+  }
 }
 
 export function daysLeft(fecha: string): number {

@@ -106,8 +106,12 @@ export function loadState(): State {
 }
 
 export function saveState(state: State) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  } catch {
+    // ignore write errors on read-only file systems
+  }
 }
 
 export function checkRateLimit(endpoint: string): boolean {

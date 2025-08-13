@@ -105,7 +105,15 @@ export default function InfoPage() {
               <tr key={s.step} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-2">{s.step}</td>
                 <td className="px-4 py-2">{s.action}</td>
-                <td className="px-4 py-2 font-mono">{s.endpoint}</td>
+                <td className="px-4 py-2 font-mono">
+                  {s.endpoint ? (
+                    <Link href={s.endpoint} className="text-blue-600 underline">
+                      {s.endpoint}
+                    </Link>
+                  ) : (
+                    s.endpoint
+                  )}
+                </td>
                 <td className="px-4 py-2 text-right">
                   <button
                     className="text-blue-600 underline"
@@ -142,18 +150,66 @@ export default function InfoPage() {
       <section className="mt-8">
         <h2 className="text-xl font-semibold mb-2">Endpoints de materias</h2>
         <ul className="list-disc pl-6 space-y-1 text-sm">
-          <li><code>/api/materias</code> — lista todas con días restantes.</li>
-          <li><code>/api/menosdias</code> — materia con menos días.</li>
-          <li><code>/api/masdias</code> — materia con más días.</li>
-          <li><code>/api/menosminutos</code> — materia con menos minutos.</li>
-          <li><code>/api/masminutos</code> — materia con más minutos.</li>
-          <li><code>/api/mastareas</code> — mayor número de tareas.</li>
-          <li><code>/api/menostareas</code> — menor número de tareas.</li>
-          <li><code>/api/materia/NOMBRE?sumar=1</code> — suma 1 al progreso.</li>
-          <li><code>/api/materia/NOMBRE?progreso=x</code> — agrega x al progreso.</li>
-          <li><code>/api/materia/NOMBRE?totaltareas=x</code> — define total de tareas.</li>
-          <li><code>/api/materia/crear?data=fecha-nombre-progreso-total</code> — crea materia.</li>
-          <li><code>/api/materia/eliminar/NOMBRE</code> — elimina materia.</li>
+          <li>
+            <Link href="/api/materias" className="text-blue-600 underline">
+              <code>/api/materias</code>
+            </Link>{' '}— lista todas con días restantes.
+          </li>
+          <li>
+            <Link href="/api/menosdias" className="text-blue-600 underline">
+              <code>/api/menosdias</code>
+            </Link>{' '}— materia con menos días.
+          </li>
+          <li>
+            <Link href="/api/masdias" className="text-blue-600 underline">
+              <code>/api/masdias</code>
+            </Link>{' '}— materia con más días.
+          </li>
+          <li>
+            <Link href="/api/menosminutos" className="text-blue-600 underline">
+              <code>/api/menosminutos</code>
+            </Link>{' '}— materia con menos minutos.
+          </li>
+          <li>
+            <Link href="/api/masminutos" className="text-blue-600 underline">
+              <code>/api/masminutos</code>
+            </Link>{' '}— materia con más minutos.
+          </li>
+          <li>
+            <Link href="/api/mastareas" className="text-blue-600 underline">
+              <code>/api/mastareas</code>
+            </Link>{' '}— mayor número de tareas.
+          </li>
+          <li>
+            <Link href="/api/menostareas" className="text-blue-600 underline">
+              <code>/api/menostareas</code>
+            </Link>{' '}— menor número de tareas.
+          </li>
+          <li>
+            <span>
+              <code>/api/materia/NOMBRE?sumar=1</code> — suma 1 al progreso.
+            </span>
+          </li>
+          <li>
+            <span>
+              <code>/api/materia/NOMBRE?progreso=x</code> — agrega x al progreso.
+            </span>
+          </li>
+          <li>
+            <span>
+              <code>/api/materia/NOMBRE?totaltareas=x</code> — define total de tareas.
+            </span>
+          </li>
+          <li>
+            <span>
+              <code>/api/materia/crear?data=fecha-nombre-progreso-total</code> — crea materia.
+            </span>
+          </li>
+          <li>
+            <span>
+              <code>/api/materia/eliminar/NOMBRE</code> — elimina materia.
+            </span>
+          </li>
         </ul>
       </section>
 
