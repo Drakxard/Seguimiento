@@ -9,22 +9,14 @@ interface Event {
   name: string
   importance: number
   content: string
+  completed: number
+  total: number
   daysRemaining: number
   isEditing: boolean
 }
 
 export default function EventTrackingSystem() {
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: "1",
-      date: "2024-08-23",
-      name: "1° Parcial",
-      importance: 3,
-      content: "U1 A U4",
-      daysRemaining: 0,
-      isEditing: false,
-    },
-  ])
+  const [events, setEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState<"table" | "visual">("table")
   const [currentDate, setCurrentDate] = useState("")
   const [showInstructions, setShowInstructions] = useState(false)
@@ -32,15 +24,37 @@ export default function EventTrackingSystem() {
 
   useEffect(() => {
     updateCurrentDate()
+
+    const fetchEvents = async () => {
+      const res = await fetch("/api/events")
+      const data: Event[] = await res.json()
+      setEvents(
+        data.map((e) => ({
+          ...e,
+          daysRemaining: e.date ? calculateDaysRemaining(e.date) : 0,
+          isEditing: false,
+        })),
+      )
+    }
+
     const consent = window.confirm("¿Permitir acceso a la configuración local?")
     if (consent) {
       setHasConsent(true)
       const stored = localStorage.getItem("events")
       if (stored) {
-        setEvents(JSON.parse(stored))
+        const parsed: Event[] = JSON.parse(stored)
+        setEvents(
+          parsed.map((e) => ({
+            ...e,
+            daysRemaining: e.date ? calculateDaysRemaining(e.date) : 0,
+          })),
+        )
+      } else {
+        fetchEvents()
       }
+    } else {
+      fetchEvents()
     }
-    updateAllDaysRemaining()
   }, [])
 
   useEffect(() => {
@@ -83,15 +97,6 @@ export default function EventTrackingSystem() {
     return diffDays
   }
 
-  const updateAllDaysRemaining = () => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) => ({
-        ...event,
-        daysRemaining: event.date ? calculateDaysRemaining(event.date) : 0,
-      })),
-    )
-  }
-
   const addRow = () => {
     const newEvent: Event = {
       id: Date.now().toString(),
@@ -99,14 +104,26 @@ export default function EventTrackingSystem() {
       name: "",
       importance: 2,
       content: "",
+      completed: 0,
+      total: 1,
       daysRemaining: 0,
       isEditing: true,
     }
     setEvents([...events, newEvent])
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "add", event: newEvent }),
+    })
   }
 
   const removeRow = (id: string) => {
     setEvents(events.filter((event) => event.id !== id))
+    fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", event: { id } }),
+    })
   }
 
   const toggleEditRow = (id: string) => {
@@ -116,6 +133,11 @@ export default function EventTrackingSystem() {
           const updatedEvent = { ...event, isEditing: !event.isEditing }
           if (!updatedEvent.isEditing && updatedEvent.date) {
             updatedEvent.daysRemaining = calculateDaysRemaining(updatedEvent.date)
+            fetch("/api/events", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "edit", event: updatedEvent }),
+            })
           }
           return updatedEvent
         }
@@ -161,14 +183,23 @@ export default function EventTrackingSystem() {
     }
   }
 
-  const getBarColor = (days: number) => {
-    if (days <= 3) return "bg-red-500"
-    if (days <= 7) return "bg-yellow-500"
-    return "bg-green-500"
+  const getProgressPercent = (completed: number, total: number) => {
+    if (total <= 0) return 0
+    return Math.min(100, Math.round((completed / total) * 100))
   }
 
-  const getProgress = (days: number) => {
-    return Math.max(0, Math.min(100, 100 - days))
+  const getBarColor = (percent: number) => {
+    if (percent >= 80) return "bg-green-600"
+    if (percent >= 60) return "bg-green-500"
+    if (percent >= 40) return "bg-green-400"
+    if (percent >= 20) return "bg-green-300"
+    return "bg-green-200"
+  }
+
+  const getOverallProgress = () => {
+    if (events.length === 0) return 0
+    const percents = events.map((e) => getProgressPercent(e.completed, e.total))
+    return Math.round(percents.reduce((a, b) => a + b, 0) / percents.length)
   }
 
   const getEventCardStyle = (days: number) => {
@@ -215,25 +246,27 @@ export default function EventTrackingSystem() {
     }
   }
 
+  const overallProgress = getOverallProgress()
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">
-                  Hoy: <span>{currentDate}</span>
-                </span>
-                <button
-                  onClick={() => setShowInstructions(!showInstructions)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <Info className="w-5 h-5" />
-                </button>
-              </div>
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                Hoy: <span>{currentDate}</span>
+              </span>
+              <button
+                onClick={() => setShowInstructions(!showInstructions)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Info className="w-5 h-5" />
+              </button>
             </div>
+          </div>
         </div>
       </header>
 
@@ -300,6 +333,9 @@ export default function EventTrackingSystem() {
                         Contenidos
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actividad
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Días Restantes
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -353,6 +389,47 @@ export default function EventTrackingSystem() {
                             placeholder="Contenidos"
                             className="border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm w-full disabled:cursor-default"
                           />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {event.isEditing ? (
+                            <div className="flex items-center space-x-1">
+                              <input
+                                type="number"
+                                min={0}
+                                value={event.completed}
+                                onChange={(e) =>
+                                  updateEvent(event.id, "completed", Number(e.target.value))
+                                }
+                                className="w-12 border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm"
+                              />
+                              <span>/</span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={event.total}
+                                onChange={(e) =>
+                                  updateEvent(event.id, "total", Number(e.target.value))
+                                }
+                                className="w-12 border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="w-full bg-gray-200 rounded h-2 mb-1">
+                                <div
+                                  className={`h-2 rounded ${getBarColor(
+                                    getProgressPercent(event.completed, event.total),
+                                  )}`}
+                                  style={{
+                                    width: `${getProgressPercent(event.completed, event.total)}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-700">
+                                {`${event.completed}/${event.total}`}
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -410,13 +487,13 @@ export default function EventTrackingSystem() {
               {/* Progress Overview */}
               <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Teoría/Práctica</h3>
-                  <span className="text-2xl font-bold text-green-600">100%</span>
+                  <h3 className="text-lg font-medium text-gray-900">Actividad</h3>
+                  <span className="text-2xl font-bold text-green-600">{overallProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
-                    className="h-3 rounded-full bg-gradient-to-r from-green-500 to-green-400"
-                    style={{ width: "100%" }}
+                    className="h-3 rounded-full bg-gradient-to-r from-green-200 to-green-600"
+                    style={{ width: `${overallProgress}%` }}
                   ></div>
                 </div>
               </div>
@@ -426,34 +503,26 @@ export default function EventTrackingSystem() {
                 <h3 className="text-lg font-medium text-gray-900 mb-6">Visualización de Eventos</h3>
 
                 <div className="space-y-4">
-                  {events.map((event) => (
-                    <div key={event.id} className="flex items-center space-x-4">
-                      <span className="text-sm font-medium text-gray-700 w-32 truncate">
-                        {event.name || "Sin nombre"}
-                      </span>
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500 w-12">Teoría</span>
+                  {events.map((event) => {
+                    const percent = getProgressPercent(event.completed, event.total)
+                    return (
+                      <div key={event.id} className="flex items-center space-x-4">
+                        <span className="text-sm font-medium text-gray-700 w-32 truncate">
+                          {event.name || "Sin nombre"}
+                        </span>
+                        <div className="flex-1 flex items-center space-x-2">
                           <div className="w-full bg-gray-200 rounded h-2">
                             <div
-                              className={`h-2 rounded ${getBarColor(event.daysRemaining)}`}
-                              style={{ width: `${getProgress(event.daysRemaining)}%` }}
+                              className={`h-2 rounded ${getBarColor(percent)}`}
+                              style={{ width: `${percent}%` }}
                             ></div>
                           </div>
+                          <span className="text-xs text-gray-500 w-12 text-right">{`${event.completed}/${event.total}`}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500 w-12">Práctica</span>
-                          <div className="w-full bg-gray-200 rounded h-2">
-                            <div
-                              className={`h-2 rounded ${getBarColor(event.daysRemaining)}`}
-                              style={{ width: `${getProgress(event.daysRemaining)}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                        <span className="text-xs text-gray-500 ml-4">{event.daysRemaining} días restantes</span>
                       </div>
-                      <span className="text-xs text-gray-500 ml-4">{event.daysRemaining} días restantes</span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Event Details */}
@@ -496,7 +565,8 @@ export default function EventTrackingSystem() {
                   <>
                     <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
                     <p className="mt-1 text-sm text-blue-700">
-                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista visual. Los días restantes se calculan automáticamente desde la fecha actual.
+                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista
+                      visual. Los días restantes se calculan automáticamente desde la fecha actual.
                     </p>
                   </>
                 ) : (
