@@ -1,5 +1,4 @@
-import { tracks, Track, Subject } from "./tracks";
-import { dayStats, resetDayIfNeeded } from "./dayStats";
+import { readState, writeState, resetDayIfNeeded, Track, Subject, Suggestion } from './state';
 
 const B = 50; // cobertura mínima por materia
 const CMAX = 0.6; // 60%
@@ -30,9 +29,14 @@ interface SuggestParams {
   forceSwitch?: boolean;
 }
 
-export function getNextSuggestion(params: SuggestParams) {
-  resetDayIfNeeded();
+export function getNextSuggestion(params: SuggestParams): Suggestion | null {
+  const state = readState();
+  resetDayIfNeeded(state);
+  writeState(state);
+
   const { slotMinutes, currentTrackSlug, forceSwitch } = params;
+  const tracks = state.tracks;
+  const dayStats = state.dayStats;
 
   // compromiso de bloque
   if (currentTrackSlug && !forceSwitch) {
@@ -47,13 +51,12 @@ export function getNextSuggestion(params: SuggestParams) {
         const H = dayStats.actsToday[current.slug] || 0;
         const delta = Q - H;
         const pressure = current.R / D + eventBonus(D) + cooldownBonus(current.lastTouched);
-        return buildSuggestion(current, slotMinutes, `Materia ${current.subject} · continuar bloque · clase en ${D} días`, {
-          delta,
-          D,
-          R: current.R,
-          cuota: Q,
-          score: pressure,
-        });
+        return buildSuggestion(
+          current,
+          slotMinutes,
+          `${current.subject} · continuar bloque · clase en ${D} días`,
+          { delta, D, R: current.R, cuota: Q, score: pressure },
+        );
       }
     }
   }
@@ -62,8 +65,8 @@ export function getNextSuggestion(params: SuggestParams) {
   if (candidates.length === 0) return null;
 
   const subjectDeficits: Record<Subject, number> = {
-    "Álgebra": Math.max(0, B - dayStats.minutesToday["Álgebra"]),
-    "Cálculo": Math.max(0, B - dayStats.minutesToday["Cálculo"]),
+    'Álgebra': Math.max(0, B - dayStats.minutesToday['Álgebra']),
+    'Cálculo': Math.max(0, B - dayStats.minutesToday['Cálculo']),
     POO: Math.max(0, B - dayStats.minutesToday.POO),
   };
   const maxDeficit = Math.max(...Object.values(subjectDeficits));
@@ -101,14 +104,13 @@ export function getNextSuggestion(params: SuggestParams) {
   if (candidates2.length === 0) return null;
 
   let choice = candidates2[0];
-  let reason = "";
+  let reason = '';
   if (maxDeficit > 0) {
     candidates2.sort(
-      (a, b) =>
-        b.delta - a.delta || a.D - b.D || (a.t.lastTouched || 0) - (b.t.lastTouched || 0),
+      (a, b) => b.delta - a.delta || a.D - b.D || (a.t.lastTouched || 0) - (b.t.lastTouched || 0),
     );
     choice = candidates2[0];
-    reason = `Materia ${choice.t.subject} · déficit · clase en ${choice.D} días · + cobertura`;
+    reason = `${choice.t.subject} · déficit · clase en ${choice.D} días · + cobertura`;
   } else {
     const maxDelta = Math.max(...candidates2.map((c) => c.delta));
     if (maxDelta > 0) {
@@ -116,16 +118,15 @@ export function getNextSuggestion(params: SuggestParams) {
         .filter((c) => c.delta === maxDelta)
         .sort((a, b) => a.D - b.D || (a.t.lastTouched || 0) - (b.t.lastTouched || 0));
       choice = pool[0];
-      reason = `Materia ${choice.t.subject} · déficit · clase en ${choice.D} días`;
+      reason = `${choice.t.subject} · déficit · clase en ${choice.D} días`;
     } else {
       candidates2.sort(
-        (a, b) =>
-          b.pressure - a.pressure || a.D - b.D || (a.t.lastTouched || 0) - (b.t.lastTouched || 0),
+        (a, b) => b.pressure - a.pressure || a.D - b.D || (a.t.lastTouched || 0) - (b.t.lastTouched || 0),
       );
       choice = candidates2[0];
-      reason = `Materia ${choice.t.subject} · sin déficit · clase en ${choice.D} días`;
+      reason = `${choice.t.subject} · sin déficit · clase en ${choice.D} días`;
       if (maxDeficit === 0 && (Date.now() - choice.t.lastTouched) / 3600000 >= PRACTICE_WINDOW_H) {
-        reason += " · + práctica ≤48 h";
+        reason += ' · + práctica ≤48 h';
       }
     }
   }
@@ -144,7 +145,7 @@ function buildSuggestion(
   slotMinutes: number,
   reason: string,
   diag: { delta: number; D: number; R: number; cuota: number; score: number },
-) {
+): Suggestion {
   const plannedActs = Math.max(1, Math.floor(slotMinutes / track.avgMinPerAct));
   const acts = Math.min(track.R, plannedActs);
   const plannedMinutes = Math.round(acts * track.avgMinPerAct);
@@ -154,22 +155,34 @@ function buildSuggestion(
     plannedActs: acts,
     plannedMinutes,
     reason,
-    diagnostics: { Δ: diag.delta, D: diag.D, R: diag.R, cuota: diag.cuota, score: diag.score },
+    diagnostics: {
+      deficit: diag.delta,
+      daysLeft: diag.D,
+      remain: diag.R,
+      quota: diag.cuota,
+      score: diag.score,
+    },
   };
 }
 
-export function registerProgress(trackSlug: string, minutesSpent?: number, nextIndex?: number) {
-  resetDayIfNeeded();
-  const track = tracks.find((t) => t.slug === trackSlug);
+export function registerProgress(
+  trackSlug: string,
+  minutesSpent?: number,
+  nextIndex?: number,
+) {
+  const state = readState();
+  resetDayIfNeeded(state);
+  const track = state.tracks.find((t) => t.slug === trackSlug);
   if (!track) return null;
   track.lastTouched = Date.now();
   track.doneActs += 1;
   track.R = Math.max(0, track.R - 1);
-  track.nextIndex = typeof nextIndex === "number" ? nextIndex : track.nextIndex + 1;
+  track.nextIndex = typeof nextIndex === 'number' ? nextIndex : track.nextIndex + 1;
   if (minutesSpent) {
-    dayStats.minutesToday[track.subject] += minutesSpent;
+    state.dayStats.minutesToday[track.subject] += minutesSpent;
     track.avgMinPerAct = track.avgMinPerAct * 0.7 + minutesSpent * 0.3;
   }
-  dayStats.actsToday[track.slug] = (dayStats.actsToday[track.slug] || 0) + 1;
+  state.dayStats.actsToday[track.slug] = (state.dayStats.actsToday[track.slug] || 0) + 1;
+  writeState(state);
   return track;
 }
