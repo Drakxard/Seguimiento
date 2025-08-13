@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Save, Trash2, Settings, Info, Lightbulb, ArrowLeft, Table, TrendingUp } from "lucide-react"
+import { Plus, Edit, Save, Trash2, Info, ArrowLeft, Table, TrendingUp } from "lucide-react"
 
 interface Event {
   id: string
@@ -9,6 +9,10 @@ interface Event {
   name: string
   importance: number
   content: string
+  theoryCompleted: number
+  theoryTotal: number
+  practiceCompleted: number
+  practiceTotal: number
   daysRemaining: number
   isEditing: boolean
 }
@@ -21,15 +25,29 @@ export default function EventTrackingSystem() {
       name: "1° Parcial",
       importance: 3,
       content: "U1 A U4",
+      theoryCompleted: 0,
+      theoryTotal: 1,
+      practiceCompleted: 0,
+      practiceTotal: 1,
       daysRemaining: 0,
       isEditing: false,
     },
   ])
   const [activeTab, setActiveTab] = useState<"table" | "visual">("table")
   const [currentDate, setCurrentDate] = useState("")
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
     updateCurrentDate()
+    const consent = window.confirm("¿Permitir acceso a la configuración local?")
+    if (consent) {
+      setHasConsent(true)
+      const stored = localStorage.getItem("events")
+      if (stored) {
+        setEvents(JSON.parse(stored))
+      }
+    }
     updateAllDaysRemaining()
   }, [])
 
@@ -47,6 +65,12 @@ export default function EventTrackingSystem() {
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [])
+
+  useEffect(() => {
+    if (hasConsent) {
+      localStorage.setItem("events", JSON.stringify(events))
+    }
+  }, [events, hasConsent])
 
   const updateCurrentDate = () => {
     const today = new Date()
@@ -83,6 +107,10 @@ export default function EventTrackingSystem() {
       name: "",
       importance: 2,
       content: "",
+      theoryCompleted: 0,
+      theoryTotal: 1,
+      practiceCompleted: 0,
+      practiceTotal: 1,
       daysRemaining: 0,
       isEditing: true,
     }
@@ -128,7 +156,7 @@ export default function EventTrackingSystem() {
     const date = new Date(dateString)
     return date
       .toLocaleDateString("es-ES", {
-        weekday: "short",
+        weekday: "long",
         day: "2-digit",
         month: "2-digit",
       })
@@ -145,10 +173,25 @@ export default function EventTrackingSystem() {
     }
   }
 
-  const getArrowColor = (days: number) => {
-    if (days <= 3) return "text-red-500"
-    if (days <= 7) return "text-yellow-500"
-    return "text-green-500"
+  const getProgressPercent = (completed: number, total: number) => {
+    if (total <= 0) return 0
+    return Math.min(100, Math.round((completed / total) * 100))
+  }
+
+  const getBarColor = (percent: number) => {
+    if (percent >= 80) return "bg-green-500"
+    if (percent >= 50) return "bg-yellow-500"
+    return "bg-red-500"
+  }
+
+  const getOverallProgress = () => {
+    const vectors: number[] = []
+    events.forEach((e) => {
+      vectors.push(getProgressPercent(e.theoryCompleted, e.theoryTotal))
+      vectors.push(getProgressPercent(e.practiceCompleted, e.practiceTotal))
+    })
+    if (vectors.length === 0) return 0
+    return Math.round(vectors.reduce((a, b) => a + b, 0) / vectors.length)
   }
 
   const getEventCardStyle = (days: number) => {
@@ -195,22 +238,27 @@ export default function EventTrackingSystem() {
     }
   }
 
+  const overallProgress = getOverallProgress()
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                Hoy: <span>{currentDate}</span>
-              </span>
-              <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
+            <div className="flex justify-between items-center h-16">
+              <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-500">
+                  Hoy: <span>{currentDate}</span>
+                </span>
+                <button
+                  onClick={() => setShowInstructions(!showInstructions)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <Info className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-          </div>
         </div>
       </header>
 
@@ -277,6 +325,12 @@ export default function EventTrackingSystem() {
                         Contenidos
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Teoría
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Práctica
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Días Restantes
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -332,6 +386,64 @@ export default function EventTrackingSystem() {
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          {event.isEditing ? (
+                            <div className="flex items-center space-x-1">
+                              <input
+                                type="number"
+                                min={0}
+                                value={event.theoryCompleted}
+                                onChange={(e) =>
+                                  updateEvent(event.id, "theoryCompleted", Number(e.target.value))
+                                }
+                                className="w-12 border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm"
+                              />
+                              <span>/</span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={event.theoryTotal}
+                                onChange={(e) =>
+                                  updateEvent(event.id, "theoryTotal", Number(e.target.value))
+                                }
+                                className="w-12 border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-700">
+                              {`${event.theoryCompleted}/${event.theoryTotal}`}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {event.isEditing ? (
+                            <div className="flex items-center space-x-1">
+                              <input
+                                type="number"
+                                min={0}
+                                value={event.practiceCompleted}
+                                onChange={(e) =>
+                                  updateEvent(event.id, "practiceCompleted", Number(e.target.value))
+                                }
+                                className="w-12 border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm"
+                              />
+                              <span>/</span>
+                              <input
+                                type="number"
+                                min={0}
+                                value={event.practiceTotal}
+                                onChange={(e) =>
+                                  updateEvent(event.id, "practiceTotal", Number(e.target.value))
+                                }
+                                className="w-12 border-0 bg-transparent focus:bg-white focus:border focus:border-blue-600 rounded px-2 py-1 text-sm"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-700">
+                              {`${event.practiceCompleted}/${event.practiceTotal}`}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               event.date
@@ -367,20 +479,6 @@ export default function EventTrackingSystem() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Instructions */}
-              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex">
-                  <Info className="text-blue-400 mt-0.5 mr-3 w-5 h-5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
-                    <p className="mt-1 text-sm text-blue-700">
-                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista
-                      visual. Los días restantes se calculan automáticamente desde la fecha actual.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
@@ -402,12 +500,12 @@ export default function EventTrackingSystem() {
               <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">Teoría/Práctica</h3>
-                  <span className="text-2xl font-bold text-green-600">100%</span>
+                  <span className="text-2xl font-bold text-green-600">{overallProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div
                     className="h-3 rounded-full bg-gradient-to-r from-green-500 to-green-400"
-                    style={{ width: "100%" }}
+                    style={{ width: `${overallProgress}%` }}
                   ></div>
                 </div>
               </div>
@@ -417,22 +515,46 @@ export default function EventTrackingSystem() {
                 <h3 className="text-lg font-medium text-gray-900 mb-6">Visualización de Eventos</h3>
 
                 <div className="space-y-4">
-                  {events.map((event) => (
-                    <div key={event.id} className="flex items-center space-x-4">
-                      <span className="text-sm font-medium text-gray-700 w-32 truncate">
-                        {event.name || "Sin nombre"}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-6 h-6 ${getArrowColor(event.daysRemaining)} transition-all duration-300`}>
-                          →
+                  {events.map((event) => {
+                    const theoryPercent = getProgressPercent(
+                      event.theoryCompleted,
+                      event.theoryTotal,
+                    )
+                    const practicePercent = getProgressPercent(
+                      event.practiceCompleted,
+                      event.practiceTotal,
+                    )
+                    return (
+                      <div key={event.id} className="flex items-center space-x-4">
+                        <span className="text-sm font-medium text-gray-700 w-32 truncate">
+                          {event.name || "Sin nombre"}
+                        </span>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500 w-12">Teoría</span>
+                            <div className="w-full bg-gray-200 rounded h-2">
+                              <div
+                                className={`h-2 rounded ${getBarColor(theoryPercent)}`}
+                                style={{ width: `${theoryPercent}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-gray-500 w-12 text-right">{`${event.theoryCompleted}/${event.theoryTotal}`}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500 w-12">Práctica</span>
+                            <div className="w-full bg-gray-200 rounded h-2">
+                              <div
+                                className={`h-2 rounded ${getBarColor(practicePercent)}`}
+                                style={{ width: `${practicePercent}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-gray-500 w-12 text-right">{`${event.practiceCompleted}/${event.practiceTotal}`}</span>
+                          </div>
                         </div>
-                        <div className={`w-6 h-6 ${getArrowColor(event.daysRemaining)} transition-all duration-300`}>
-                          →
-                        </div>
+                        <span className="text-xs text-gray-500 ml-4">{event.daysRemaining} días restantes</span>
                       </div>
-                      <span className="text-xs text-gray-500 ml-4">{event.daysRemaining} días restantes</span>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Event Details */}
@@ -463,23 +585,34 @@ export default function EventTrackingSystem() {
                   })}
                 </div>
               </div>
-
-              {/* Instructions */}
-              <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex">
-                  <Lightbulb className="text-green-400 mt-0.5 mr-3 w-5 h-5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-green-800">Vista Visual</h3>
-                    <p className="mt-1 text-sm text-green-700">
-                      Los colores y tamaños de las flechas cambian según la urgencia y días restantes. Usa{" "}
-                      <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + ←</kbd> para volver a la tabla.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>
+        {showInstructions && (
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex">
+              <Info className="text-blue-400 mt-0.5 mr-3 w-5 h-5" />
+              <div>
+                {activeTab === "table" ? (
+                  <>
+                    <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
+                    <p className="mt-1 text-sm text-blue-700">
+                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista visual. Los días restantes se calculan automáticamente desde la fecha actual.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-sm font-medium text-blue-800">Vista Visual</h3>
+                    <p className="mt-1 text-sm text-blue-700">
+                      Los colores y tamaños de las barras cambian según la urgencia y días restantes. Usa{" "}
+                      <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + ←</kbd> para volver a la tabla.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
