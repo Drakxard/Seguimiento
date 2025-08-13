@@ -1,5 +1,6 @@
-import { tracks, Track, Subject } from "./tracks";
-import { dayStats, resetDayIfNeeded } from "./dayStats";
+import { Track, Subject } from "./tracks";
+import { resetDayIfNeeded } from "./dayStats";
+import { loadState, saveState } from "./state";
 
 const B = 50; // cobertura mínima por materia
 const CMAX = 0.6; // 60%
@@ -31,20 +32,22 @@ interface SuggestParams {
 }
 
 export function getNextSuggestion(params: SuggestParams) {
-  resetDayIfNeeded();
+  const state = loadState();
+  resetDayIfNeeded(state.dayStats);
+  saveState(state);
   const { slotMinutes, currentTrackSlug, forceSwitch } = params;
 
   // compromiso de bloque
   if (currentTrackSlug && !forceSwitch) {
-    const current = tracks.find((t) => t.slug === currentTrackSlug);
+    const current = state.tracks.find((t) => t.slug === currentTrackSlug);
     if (current && current.active && current.R > 0) {
-      const emergency = tracks.some(
+      const emergency = state.tracks.some(
         (t) => t.slug !== currentTrackSlug && t.active && t.R > 0 && daysUntil(t.classDate) <= 1,
       );
       if (!emergency) {
         const D = daysUntil(current.classDate);
         const Q = Math.ceil(current.R / D);
-        const H = dayStats.actsToday[current.slug] || 0;
+        const H = state.dayStats.actsToday[current.slug] || 0;
         const delta = Q - H;
         const pressure = current.R / D + eventBonus(D) + cooldownBonus(current.lastTouched);
         return buildSuggestion(current, slotMinutes, `Materia ${current.subject} · continuar bloque · clase en ${D} días`, {
@@ -58,13 +61,13 @@ export function getNextSuggestion(params: SuggestParams) {
     }
   }
 
-  let candidates = tracks.filter((t) => t.active && t.R > 0);
+  let candidates = state.tracks.filter((t) => t.active && t.R > 0);
   if (candidates.length === 0) return null;
 
   const subjectDeficits: Record<Subject, number> = {
-    "Álgebra": Math.max(0, B - dayStats.minutesToday["Álgebra"]),
-    "Cálculo": Math.max(0, B - dayStats.minutesToday["Cálculo"]),
-    POO: Math.max(0, B - dayStats.minutesToday.POO),
+    "Álgebra": Math.max(0, B - state.dayStats.minutesToday["Álgebra"]),
+    "Cálculo": Math.max(0, B - state.dayStats.minutesToday["Cálculo"]),
+    POO: Math.max(0, B - state.dayStats.minutesToday.POO),
   };
   const maxDeficit = Math.max(...Object.values(subjectDeficits));
   let coverageSubjects: Subject[] = [];
@@ -78,17 +81,17 @@ export function getNextSuggestion(params: SuggestParams) {
   const evaluated = candidates.map((t) => {
     const D = daysUntil(t.classDate);
     const Q = Math.ceil(t.R / D);
-    const H = dayStats.actsToday[t.slug] || 0;
+    const H = state.dayStats.actsToday[t.slug] || 0;
     const delta = Q - H;
     const pressure = t.R / D + eventBonus(D) + cooldownBonus(t.lastTouched);
     return { t, D, Q, H, delta, pressure };
   });
 
-  const totalMinutes = Object.values(dayStats.minutesToday).reduce((a, b) => a + b, 0);
+  const totalMinutes = Object.values(state.dayStats.minutesToday).reduce((a, b) => a + b, 0);
   const overCmax: Subject[] = [];
   if (totalMinutes > 0) {
-    (Object.keys(dayStats.minutesToday) as Subject[]).forEach((s) => {
-      if (dayStats.minutesToday[s] / totalMinutes > CMAX) overCmax.push(s);
+    (Object.keys(state.dayStats.minutesToday) as Subject[]).forEach((s) => {
+      if (state.dayStats.minutesToday[s] / totalMinutes > CMAX) overCmax.push(s);
     });
   }
 
@@ -154,22 +157,31 @@ function buildSuggestion(
     plannedActs: acts,
     plannedMinutes,
     reason,
-    diagnostics: { Δ: diag.delta, D: diag.D, R: diag.R, cuota: diag.cuota, score: diag.score },
+    diagnostics: {
+      deficit: diag.delta,
+      daysLeft: diag.D,
+      remain: diag.R,
+      quota: diag.cuota,
+      score: diag.score,
+    },
   };
 }
 
 export function registerProgress(trackSlug: string, minutesSpent?: number, nextIndex?: number) {
-  resetDayIfNeeded();
-  const track = tracks.find((t) => t.slug === trackSlug);
-  if (!track) return null;
+  const state = loadState();
+  resetDayIfNeeded(state.dayStats);
+  const track = state.tracks.find((t) => t.slug === trackSlug);
+  if (!track) return { error: 'not_found' };
+  if (track.R <= 0) return { error: 'complete' };
   track.lastTouched = Date.now();
   track.doneActs += 1;
   track.R = Math.max(0, track.R - 1);
-  track.nextIndex = typeof nextIndex === "number" ? nextIndex : track.nextIndex + 1;
+  track.nextIndex = typeof nextIndex === 'number' ? nextIndex : track.nextIndex + 1;
   if (minutesSpent) {
-    dayStats.minutesToday[track.subject] += minutesSpent;
+    state.dayStats.minutesToday[track.subject] += minutesSpent;
     track.avgMinPerAct = track.avgMinPerAct * 0.7 + minutesSpent * 0.3;
   }
-  dayStats.actsToday[track.slug] = (dayStats.actsToday[track.slug] || 0) + 1;
-  return track;
+  state.dayStats.actsToday[track.slug] = (state.dayStats.actsToday[track.slug] || 0) + 1;
+  saveState(state);
+  return { track };
 }

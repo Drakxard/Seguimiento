@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Edit, Save, Trash2, Info, ArrowLeft, Table, TrendingUp } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface Event {
   id: string
@@ -19,7 +20,6 @@ export default function EventTrackingSystem() {
   const [events, setEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState<"table" | "visual">("table")
   const [currentDate, setCurrentDate] = useState("")
-  const [showInstructions, setShowInstructions] = useState(false)
   const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
@@ -256,15 +256,17 @@ export default function EventTrackingSystem() {
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <span className="text-sm text-gray-500">
                 Hoy: <span>{currentDate}</span>
               </span>
-              <button
-                onClick={() => setShowInstructions(!showInstructions)}
+              <a
+                href="/info"
+                target="_blank"
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <Info className="w-5 h-5" />
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -556,32 +558,6 @@ export default function EventTrackingSystem() {
             </div>
           )}
         </div>
-        {showInstructions && (
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex">
-              <Info className="text-blue-400 mt-0.5 mr-3 w-5 h-5" />
-              <div>
-                {activeTab === "table" ? (
-                  <>
-                    <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
-                    <p className="mt-1 text-sm text-blue-700">
-                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista
-                      visual. Los días restantes se calculan automáticamente desde la fecha actual.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-sm font-medium text-blue-800">Vista Visual</h3>
-                    <p className="mt-1 text-sm text-blue-700">
-                      Los colores y tamaños de las barras cambian según la urgencia y días restantes. Usa{" "}
-                      <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + ←</kbd> para volver a la tabla.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
