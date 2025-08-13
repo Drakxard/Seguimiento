@@ -6,11 +6,7 @@ import { DayStats, getDefaultDayStats } from './dayStats';
 export interface State {
   tracks: Track[];
   dayStats: DayStats;
-  reqLog: {
-    next: Record<string, any>;
-    progress: Record<string, any>;
-    tracks: Record<string, any>;
-  };
+  reqLog: Record<string, Record<string, any>>;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -87,7 +83,7 @@ function createInitialState(): State {
       },
     ],
     dayStats: getDefaultDayStats(),
-    reqLog: { next: {}, progress: {}, tracks: {} },
+    reqLog: {},
   };
 }
 
@@ -112,13 +108,14 @@ export function saveState(state: State) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-export function getStoredResponse(endpoint: keyof State['reqLog'], reqId: string) {
+export function getStoredResponse(endpoint: string, reqId: string) {
   const state = loadState();
-  return state.reqLog[endpoint][reqId];
+  return state.reqLog[endpoint]?.[reqId];
 }
 
-export function storeResponse(endpoint: keyof State['reqLog'], reqId: string, response: any) {
+export function storeResponse(endpoint: string, reqId: string, response: any) {
   const state = loadState();
+  if (!state.reqLog[endpoint]) state.reqLog[endpoint] = {};
   state.reqLog[endpoint][reqId] = response;
   saveState(state);
 }

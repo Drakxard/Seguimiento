@@ -81,6 +81,10 @@ export default function InfoPage() {
           <code> reqId </code> y <code> ts </code> para garantizar idempotencia y
           evitar cach\u00e9.
         </p>
+        <p className="mb-4">
+          Usa el selector de tema en la cabecera para alternar entre modo claro,
+          oscuro, azulado o verde.
+        </p>
         <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow-sm border mb-4">
           <thead className="bg-gray-50">
             <tr>
@@ -176,6 +180,21 @@ export default function InfoPage() {
               </div>
             ),
         )}
+      </section>
+
+      <section>
+        <h2 className="text-xl font-semibold mb-2">Endpoints de materias</h2>
+        <ul className="list-disc pl-6 space-y-1 text-sm">
+          <li><code>/api/materias</code> — lista materias y días restantes.</li>
+          <li><code>/api/menosdias</code> / <code>/api/masdias</code> — materia con menos o más días para su clase.</li>
+          <li><code>/api/menosminutos</code> / <code>/api/masminutos</code> — materia con menor o mayor cobertura diaria.</li>
+          <li><code>/api/mastareas</code> / <code>/api/menostareas</code> — materia con más o menos tareas pendientes.</li>
+          <li><code>/api/materia/&lt;slug&gt;?sumar=1</code> — suma un acto.</li>
+          <li><code>/api/materia/&lt;slug&gt;?progreso=x</code> — avanza x actos.</li>
+          <li><code>/api/materia/&lt;slug&gt;?totaltareas=x</code> — ajusta el total de tareas.</li>
+          <li><code>/api/materia/crear?data=fecha-nombre-progreso-total</code> — crea una materia.</li>
+          <li><code>/api/materia/eliminar/&lt;slug&gt;</code> — elimina la materia indicada.</li>
+        </ul>
       </section>
 
       <p>

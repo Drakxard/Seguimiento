@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Edit, Save, Trash2, Info, ArrowLeft, Table, TrendingUp } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface Event {
   id: string
@@ -255,6 +256,7 @@ export default function EventTrackingSystem() {
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <span className="text-sm text-gray-500">
                 Hoy: <span>{currentDate}</span>
               </span>
