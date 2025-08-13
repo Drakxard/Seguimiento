@@ -1,0 +1,80 @@
+export interface Event {
+  id: string
+  date: string
+  name: string
+  importance: number
+  content: string
+  completed: number
+  total: number
+  daysRemaining: number
+  isEditing: boolean
+}
+
+export let events: Event[] = [
+  {
+    id: "1",
+    date: "2024-08-17",
+    name: "T - Álgebra",
+    importance: 2,
+    content: "5.1 a 5.6",
+    completed: 1,
+    total: 6,
+    daysRemaining: 0,
+    isEditing: false,
+  },
+  {
+    id: "2",
+    date: "2024-08-20",
+    name: "P - Álgebra",
+    importance: 2,
+    content: "5.1 a 5.6",
+    completed: 1,
+    total: 6,
+    daysRemaining: 0,
+    isEditing: false,
+  },
+  {
+    id: "3",
+    date: "2024-08-18",
+    name: "T - Poo",
+    importance: 2,
+    content: "U1",
+    completed: 0,
+    total: 1,
+    daysRemaining: 0,
+    isEditing: false,
+  },
+  {
+    id: "4",
+    date: "2024-08-14",
+    name: "P - Poo",
+    importance: 2,
+    content: "U1",
+    completed: 0,
+    total: 1,
+    daysRemaining: 0,
+    isEditing: false,
+  },
+  {
+    id: "5",
+    date: "2024-08-18",
+    name: "P - Cálculo",
+    importance: 2,
+    content: "4.1 a 4.3",
+    completed: 0,
+    total: 1,
+    daysRemaining: 0,
+    isEditing: false,
+  },
+  {
+    id: "6",
+    date: "2024-08-21",
+    name: "T - Cálculo",
+    importance: 2,
+    content: "4.1 a 4.3",
+    completed: 0,
+    total: 1,
+    daysRemaining: 0,
+    isEditing: false,
+  },
+]
