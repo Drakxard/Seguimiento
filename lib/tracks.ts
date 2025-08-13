@@ -12,7 +12,7 @@ export interface Track {
   doneActs: number;
 }
 
-export const tracks: Track[] = [
+export const initialTracks: Track[] = [
   {
     slug: "algebra-t",
     subject: "Álgebra",
