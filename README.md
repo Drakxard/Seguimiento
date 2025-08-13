@@ -28,3 +28,17 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Seguimiento API
+
+This project now exposes two endpoints to assist with study planning:
+
+- `POST /api/next`: receives `{ slotMinutes, currentTrackSlug?, forceSwitch? }` and
+  returns the next recommended track to study. Responds with `204` when there are
+  no pending tracks.
+- `POST /api/progress`: receives `{ trackSlug, minutesSpent?, nextIndex? }` to
+  register completed work on a track and returns the updated track along with the
+  next suggestion.
+
+Each suggestion includes the planned acts and minutes together with a reason and
+diagnostic values (`Δ, D, R, cuota, score`) that follow the scheduling rules.
