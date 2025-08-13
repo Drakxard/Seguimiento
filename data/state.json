@@ -12,5 +12,5 @@
     "actsToday": {},
     "minutesToday": {"Álgebra":0, "Cálculo":0, "POO":0}
   },
-  "reqLog": {"next": {}, "progress": {}, "tracks": {}}
+  "requestCounts": {}
 }

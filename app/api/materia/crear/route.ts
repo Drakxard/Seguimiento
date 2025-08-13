@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
 import { loadMaterias, saveMaterias } from '@/lib/materias';
+import { incrementRequestCount } from '@/lib/state';
 
 export async function GET(request: Request) {
+  if (!incrementRequestCount('materia-crear')) {
+    return NextResponse.json({ error: 'Daily limit reached' }, { status: 429 });
+  }
   const { searchParams } = new URL(request.url);
-  const reqId = searchParams.get('reqId');
-  const ts = searchParams.get('ts');
   const data = searchParams.get('data');
-  if (!reqId || !ts || !data) {
-    return NextResponse.json({ error: 'reqId, ts and data required' }, { status: 400 });
+  if (!data) {
+    return NextResponse.json({ error: 'data required' }, { status: 400 });
   }
   const state = loadMaterias();
-  if (state.reqLog[reqId]) {
-    return NextResponse.json(state.reqLog[reqId], { headers: { 'Cache-Control': 'no-store' } });
-  }
   const parts = data.split('-');
   if (parts.length !== 4) {
     return NextResponse.json({ error: 'data format: fecha-nombre-progreso-totaltareas' }, { status: 400 });
@@ -26,8 +25,7 @@ export async function GET(request: Request) {
     minutos: 0,
   };
   state.materias.push(materia);
-  const response = { status: 'created', materia };
-  state.reqLog[reqId] = response;
   saveMaterias(state);
+  const response = { status: 'created', materia };
   return NextResponse.json(response, { headers: { 'Cache-Control': 'no-store' } });
 }

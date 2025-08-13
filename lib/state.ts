@@ -2,15 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { Track } from './tracks';
 import { DayStats, getDefaultDayStats } from './dayStats';
+import { loadSettings } from './settings';
 
 export interface State {
   tracks: Track[];
   dayStats: DayStats;
-  reqLog: {
-    next: Record<string, any>;
-    progress: Record<string, any>;
-    tracks: Record<string, any>;
-  };
+  requestCounts: Record<string, { date: string; count: number }>;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -87,7 +84,7 @@ function createInitialState(): State {
       },
     ],
     dayStats: getDefaultDayStats(),
-    reqLog: { next: {}, progress: {}, tracks: {} },
+    requestCounts: {},
   };
 }
 
@@ -112,13 +109,20 @@ export function saveState(state: State) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-export function getStoredResponse(endpoint: keyof State['reqLog'], reqId: string) {
+export function incrementRequestCount(endpoint: string): boolean {
   const state = loadState();
-  return state.reqLog[endpoint][reqId];
-}
-
-export function storeResponse(endpoint: keyof State['reqLog'], reqId: string, response: any) {
-  const state = loadState();
-  state.reqLog[endpoint][reqId] = response;
+  const today = new Date().toISOString().slice(0, 10);
+  const entry = state.requestCounts[endpoint] || { date: today, count: 0 };
+  if (entry.date !== today) {
+    entry.date = today;
+    entry.count = 0;
+  }
+  const { dailyLimit } = loadSettings();
+  if (entry.count >= dailyLimit) {
+    return false;
+  }
+  entry.count += 1;
+  state.requestCounts[endpoint] = entry;
   saveState(state);
+  return true;
 }

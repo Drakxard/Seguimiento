@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import { registerProgress, getNextSuggestion } from "../../../lib/scheduler";
-import { loadState, getStoredResponse, storeResponse } from "../../../lib/state";
+import { loadState, incrementRequestCount } from "../../../lib/state";
 
 export async function GET(request: Request) {
+  if (!incrementRequestCount("progress")) {
+    return new Response("Daily limit reached", { status: 429 });
+  }
   const { searchParams } = new URL(request.url);
   const trackSlug = searchParams.get("track")?.toLowerCase();
   const minutes = searchParams.get("minutes");
   const nextIndex = searchParams.get("nextIndex") ?? searchParams.get("activityId");
-  const reqId = searchParams.get("reqId");
-  const ts = searchParams.get("ts");
-  if (!trackSlug || !reqId || !ts) {
+  if (!trackSlug) {
     return new Response("Missing parameters", { status: 400, headers: { "Cache-Control": "no-store" } });
-  }
-
-  const cached = getStoredResponse("progress", reqId);
-  if (cached) {
-    return NextResponse.json(cached, { headers: { "Cache-Control": "no-store" } });
   }
 
   const state = loadState();
@@ -43,6 +39,5 @@ export async function GET(request: Request) {
   });
 
   const response = { updatedTrack, suggestedNext };
-  storeResponse("progress", reqId, response);
   return NextResponse.json(response, { headers: { "Cache-Control": "no-store" } });
 }

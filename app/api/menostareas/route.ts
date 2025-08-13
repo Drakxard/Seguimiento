@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { loadMaterias } from '@/lib/materias';
+import { incrementRequestCount } from '@/lib/state';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const reqId = searchParams.get('reqId');
-  const ts = searchParams.get('ts');
-  if (!reqId || !ts) {
-    return NextResponse.json({ error: 'reqId and ts required' }, { status: 400 });
+export async function GET() {
+  if (!incrementRequestCount('menostareas')) {
+    return NextResponse.json({ error: 'Daily limit reached' }, { status: 429 });
   }
   const state = loadMaterias();
   if (!state.materias.length) {

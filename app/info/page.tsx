@@ -30,14 +30,14 @@ const steps: Step[] = [
     action: 'Iniciar bloque solicitando sugerencia',
     endpoint: '/api/next',
     details:
-      'Llama a /api/next con slotMinutes, currentTrack si ya estabas en uno, forceSwitch para cambiar, y siempre reqId y ts. Abre el PDF indicado y revisa el motivo recibido.',
+      'Llama a /api/next con slotMinutes, currentTrack si ya estabas en uno y forceSwitch para cambiar. Abre el PDF indicado y revisa el motivo recibido.',
   },
   {
     step: 4,
     action: 'Registrar avance del acto completado',
     endpoint: '/api/progress',
     details:
-      'Env\u00eda track, minutes reales y nextIndex (o activityId) junto a reqId y ts para descontar el avance.',
+      'Env\u00eda track, minutes reales y nextIndex (o activityId) para descontar el avance.',
   },
   {
     step: 5,
@@ -77,47 +77,7 @@ export default function InfoPage() {
       <section>
         <h1 className="text-2xl font-bold mb-4">Gu\u00eda de uso</h1>
         <p className="mb-4">
-          Todos los endpoints son <code>GET</code> y requieren los par\u00e1metros
-          <code> reqId </code> y <code> ts </code> para garantizar idempotencia y
-          evitar cach\u00e9.
-        </p>
-        <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow-sm border mb-4">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Par\u00e1metro
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Qu\u00e9 es
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Por qu\u00e9 se usa
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                C\u00f3mo generarlo
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            <tr>
-              <td className="px-4 py-2 font-mono">reqId (UUID)</td>
-              <td className="px-4 py-2">Identificador \u00fanico por petici\u00f3n</td>
-              <td className="px-4 py-2">Permite ignorar duplicados</td>
-              <td className="px-4 py-2 font-mono">crypto.randomUUID()</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-2 font-mono">ts</td>
-              <td className="px-4 py-2">Timestamp en milisegundos</td>
-              <td className="px-4 py-2">Evita respuestas cacheadas</td>
-              <td className="px-4 py-2 font-mono">Date.now()</td>
-            </tr>
-          </tbody>
-        </table>
-        <p>
-          Un <strong>UUID</strong> es una cadena como
-          <code> 123e4567-e89b-12d3-a456-426614174000 </code>. Se utiliza como
-          <code> reqId </code> para que el seguimiento registre cada solicitud una
-          sola vez.
+          Todos los endpoints son <code>GET</code>. Cada uno est\u00e1 limitado a un m\u00e1ximo diario configurable en <code>data/settings.json</code> (por defecto 100).
         </p>
       </section>
 
@@ -180,18 +140,18 @@ export default function InfoPage() {
       <section className="mt-8">
         <h2 className="text-xl font-semibold mb-2">Endpoints de materias</h2>
         <ul className="list-disc pl-6 space-y-1 text-sm">
-          <li><code>/api/materias?reqId=...&ts=...</code> — lista todas con días restantes.</li>
-          <li><code>/api/menosdias?reqId=...&ts=...</code> — materia con menos días.</li>
-          <li><code>/api/masdias?reqId=...&ts=...</code> — materia con más días.</li>
-          <li><code>/api/menosminutos?reqId=...&ts=...</code> — materia con menos minutos.</li>
-          <li><code>/api/masminutos?reqId=...&ts=...</code> — materia con más minutos.</li>
-          <li><code>/api/mastareas?reqId=...&ts=...</code> — mayor número de tareas.</li>
-          <li><code>/api/menostareas?reqId=...&ts=...</code> — menor número de tareas.</li>
-          <li><code>/api/materia/NOMBRE?sumar=1&reqId=...&ts=...</code> — suma 1 al progreso.</li>
-          <li><code>/api/materia/NOMBRE?progreso=x&reqId=...&ts=...</code> — agrega x al progreso.</li>
-          <li><code>/api/materia/NOMBRE?totaltareas=x&reqId=...&ts=...</code> — define total de tareas.</li>
-          <li><code>/api/materia/crear?data=fecha-nombre-progreso-total&reqId=...&ts=...</code> — crea materia.</li>
-          <li><code>/api/materia/eliminar/NOMBRE?reqId=...&ts=...</code> — elimina materia.</li>
+          <li><code>/api/materias</code> — lista todas con días restantes.</li>
+          <li><code>/api/menosdias</code> — materia con menos días.</li>
+          <li><code>/api/masdias</code> — materia con más días.</li>
+          <li><code>/api/menosminutos</code> — materia con menos minutos.</li>
+          <li><code>/api/masminutos</code> — materia con más minutos.</li>
+          <li><code>/api/mastareas</code> — mayor número de tareas.</li>
+          <li><code>/api/menostareas</code> — menor número de tareas.</li>
+          <li><code>/api/materia/NOMBRE?sumar=1</code> — suma 1 al progreso.</li>
+          <li><code>/api/materia/NOMBRE?progreso=x</code> — agrega x al progreso.</li>
+          <li><code>/api/materia/NOMBRE?totaltareas=x</code> — define total de tareas.</li>
+          <li><code>/api/materia/crear?data=fecha-nombre-progreso-total</code> — crea materia.</li>
+          <li><code>/api/materia/eliminar/NOMBRE</code> — elimina materia.</li>
         </ul>
       </section>
 

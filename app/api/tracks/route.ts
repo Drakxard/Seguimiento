@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { loadState, getStoredResponse, storeResponse } from "../../../lib/state";
+import { loadState, incrementRequestCount } from "../../../lib/state";
 import { Track } from "../../../lib/tracks";
 
 function daysUntil(dateStr: string): number {
@@ -10,18 +10,9 @@ function daysUntil(dateStr: string): number {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const reqId = searchParams.get("reqId");
-  const ts = searchParams.get("ts");
-  if (!reqId || !ts) {
-    return new Response("Missing reqId or ts", { status: 400, headers: { "Cache-Control": "no-store" } });
+  if (!incrementRequestCount("tracks")) {
+    return new Response("Daily limit reached", { status: 429 });
   }
-
-  const cached = getStoredResponse("tracks", reqId);
-  if (cached) {
-    return NextResponse.json(cached, { headers: { "Cache-Control": "no-store" } });
-  }
-
   const state = loadState();
   const result = state.tracks.map((t: Track) => {
     const daysLeft = daysUntil(t.classDate);
@@ -43,6 +34,5 @@ export async function GET(request: Request) {
     };
   });
 
-  storeResponse("tracks", reqId, result);
   return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
 }

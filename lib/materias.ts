@@ -11,7 +11,6 @@ export interface Materia {
 
 export interface MateriasState {
   materias: Materia[];
-  reqLog: Record<string, any>;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -23,8 +22,7 @@ function defaultState(): MateriasState {
       { nombre: 'algebra', fecha: '2025-08-17', progreso: 0, totaltareas: 10, minutos: 0 },
       { nombre: 'calculo', fecha: '2025-08-18', progreso: 0, totaltareas: 10, minutos: 0 },
       { nombre: 'poo', fecha: '2025-08-21', progreso: 0, totaltareas: 10, minutos: 0 }
-    ],
-    reqLog: {}
+    ]
   };
 }
 
