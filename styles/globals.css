@@ -73,6 +73,24 @@
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
 }
+.blue {
+  --background: #e0f2fe;
+  --foreground: #082f49;
+  --primary: #3b82f6;
+  --primary-foreground: #e0f2fe;
+  --secondary: #bfdbfe;
+  --secondary-foreground: #082f49;
+}
+
+.green {
+  --background: #ecfdf5;
+  --foreground: #064e3b;
+  --primary: #10b981;
+  --primary-foreground: #ecfdf5;
+  --secondary: #a7f3d0;
+  --secondary-foreground: #064e3b;
+}
+
 
 @theme inline {
   --color-background: var(--background);
