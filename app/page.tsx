@@ -198,9 +198,7 @@ export default function EventTrackingSystem() {
 
   const getOverallProgress = () => {
     if (events.length === 0) return 0
-    const percents = events.map((e) =>
-      getProgressPercent(e.completed, e.total),
-    )
+    const percents = events.map((e) => getProgressPercent(e.completed, e.total))
     return Math.round(percents.reduce((a, b) => a + b, 0) / percents.length)
   }
 
@@ -255,20 +253,20 @@ export default function EventTrackingSystem() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">
-                  Hoy: <span>{currentDate}</span>
-                </span>
-                <button
-                  onClick={() => setShowInstructions(!showInstructions)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <Info className="w-5 h-5" />
-                </button>
-              </div>
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                Hoy: <span>{currentDate}</span>
+              </span>
+              <button
+                onClick={() => setShowInstructions(!showInstructions)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Info className="w-5 h-5" />
+              </button>
             </div>
+          </div>
         </div>
       </header>
 
@@ -506,10 +504,7 @@ export default function EventTrackingSystem() {
 
                 <div className="space-y-4">
                   {events.map((event) => {
-                    const percent = getProgressPercent(
-                      event.completed,
-                      event.total,
-                    )
+                    const percent = getProgressPercent(event.completed, event.total)
                     return (
                       <div key={event.id} className="flex items-center space-x-4">
                         <span className="text-sm font-medium text-gray-700 w-32 truncate">
@@ -570,7 +565,8 @@ export default function EventTrackingSystem() {
                   <>
                     <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
                     <p className="mt-1 text-sm text-blue-700">
-                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista visual. Los días restantes se calculan automáticamente desde la fecha actual.
+                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista
+                      visual. Los días restantes se calculan automáticamente desde la fecha actual.
                     </p>
                   </>
                 ) : (

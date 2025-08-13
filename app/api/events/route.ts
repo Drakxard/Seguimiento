@@ -25,18 +25,22 @@ export async function POST(request: Request) {
         total: event.total ?? 0,
       })
       return NextResponse.json({ status: "added" })
+
     case "edit":
       const index = events.findIndex((e) => e.id === event.id)
-      if (index !== -1)
+      if (index !== -1) {
         events[index] = {
           ...events[index],
           ...event,
         }
+      }
       return NextResponse.json({ status: "updated" })
+
     case "delete":
       const idx = events.findIndex((e) => e.id === event.id)
       if (idx !== -1) events.splice(idx, 1)
       return NextResponse.json({ status: "deleted" })
+
     default:
       return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   }
