@@ -1,5 +1,5 @@
-import { tracks, Track, Subject } from "./tracks";
-import { dayStats, resetDayIfNeeded } from "./dayStats";
+import { Track, Subject } from "./tracks";
+import { loadState, saveState, resetDayIfNeeded } from "./state";
 
 const B = 50; // cobertura mínima por materia
 const CMAX = 0.6; // 60%
@@ -31,10 +31,14 @@ interface SuggestParams {
 }
 
 export function getNextSuggestion(params: SuggestParams) {
-  resetDayIfNeeded();
+  const state = loadState();
+  resetDayIfNeeded(state.dayStats);
+  saveState();
   const { slotMinutes, currentTrackSlug, forceSwitch } = params;
 
   // compromiso de bloque
+  const tracks = state.tracks;
+  const dayStats = state.dayStats;
   if (currentTrackSlug && !forceSwitch) {
     const current = tracks.find((t) => t.slug === currentTrackSlug);
     if (current && current.active && current.R > 0) {
@@ -159,7 +163,10 @@ function buildSuggestion(
 }
 
 export function registerProgress(trackSlug: string, minutesSpent?: number, nextIndex?: number) {
-  resetDayIfNeeded();
+  const state = loadState();
+  resetDayIfNeeded(state.dayStats);
+  const tracks = state.tracks;
+  const dayStats = state.dayStats;
   const track = tracks.find((t) => t.slug === trackSlug);
   if (!track) return null;
   track.lastTouched = Date.now();
@@ -171,5 +178,6 @@ export function registerProgress(trackSlug: string, minutesSpent?: number, nextI
     track.avgMinPerAct = track.avgMinPerAct * 0.7 + minutesSpent * 0.3;
   }
   dayStats.actsToday[track.slug] = (dayStats.actsToday[track.slug] || 0) + 1;
+  saveState();
   return track;
 }

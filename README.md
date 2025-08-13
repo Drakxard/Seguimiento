@@ -31,14 +31,18 @@ Continue building your app on:
 
 ## Seguimiento API
 
-This project now exposes two endpoints to assist with study planning:
+This project now exposes three **GET** endpoints to assist with study planning. All
+requests require a unique `reqId` and timestamp `ts` query parameter and respond
+with `Cache-Control: no-store`.
 
-- `POST /api/next`: receives `{ slotMinutes, currentTrackSlug?, forceSwitch? }` and
-  returns the next recommended track to study. Responds with `204` when there are
-  no pending tracks.
-- `POST /api/progress`: receives `{ trackSlug, minutesSpent?, nextIndex? }` to
-  register completed work on a track and returns the updated track along with the
-  next suggestion.
+- `GET /api/next`: query params `slotMinutes`, `currentTrack?`, `forceSwitch?` and
+  the required `reqId`, `ts`. It returns the next recommended track to study or
+  `204` when there are no pending tracks.
+- `GET /api/progress`: query params `track`, optional `minutes`, `nextIndex`, plus
+  `reqId` and `ts`. It registers completed work on a track, returning the updated
+  track and the next suggestion. Repeated `reqId` values are ignored.
+- `GET /api/tracks`: returns a summary of all tracks including quota, deficit and
+  days remaining.
 
 Each suggestion includes the planned acts and minutes together with a reason and
 diagnostic values (`Δ, D, R, cuota, score`) that follow the scheduling rules.
