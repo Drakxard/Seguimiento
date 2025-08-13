@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Edit, Save, Trash2, Info, ArrowLeft, Table, TrendingUp } from "lucide-react"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 
 interface Event {
   id: string
@@ -19,7 +20,6 @@ export default function EventTrackingSystem() {
   const [events, setEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState<"table" | "visual">("table")
   const [currentDate, setCurrentDate] = useState("")
-  const [showInstructions, setShowInstructions] = useState(false)
   const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
@@ -249,22 +249,24 @@ export default function EventTrackingSystem() {
   const overallProgress = getOverallProgress()
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-card shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-semibold text-gray-900">Sistema de Seguimiento de Eventos</h1>
+            <h1 className="text-xl font-semibold text-foreground">Sistema de Seguimiento de Eventos</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 Hoy: <span>{currentDate}</span>
               </span>
-              <button
-                onClick={() => setShowInstructions(!showInstructions)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+              <ThemeSwitcher />
+              <a
+                href="/info"
+                target="_blank"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Info className="w-5 h-5" />
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -272,14 +274,14 @@ export default function EventTrackingSystem() {
 
       {/* Tab Navigation */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="border-b border-gray-200">
+        <div className="bg-card rounded-lg shadow-sm">
+          <div className="border-b border-border">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               <button
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === "table"
                     ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => setActiveTab("table")}
               >
@@ -290,7 +292,7 @@ export default function EventTrackingSystem() {
                 className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
                   activeTab === "visual"
                     ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => setActiveTab("visual")}
               >
@@ -305,7 +307,7 @@ export default function EventTrackingSystem() {
             <div className="p-6">
               {/* Table Controls */}
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Gestión de Eventos</h2>
+                <h2 className="text-lg font-semibold text-foreground">Gestión de Eventos</h2>
                 <button
                   onClick={addRow}
                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
@@ -474,7 +476,7 @@ export default function EventTrackingSystem() {
           {activeTab === "visual" && (
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold text-gray-900">Vista Visual - Progreso de Eventos</h2>
+                <h2 className="text-lg font-semibold text-foreground">Vista Visual - Progreso de Eventos</h2>
                 <button
                   onClick={() => setActiveTab("table")}
                   className="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
@@ -487,7 +489,7 @@ export default function EventTrackingSystem() {
               {/* Progress Overview */}
               <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Actividad</h3>
+                  <h3 className="text-lg font-medium text-foreground">Actividad</h3>
                   <span className="text-2xl font-bold text-green-600">{overallProgress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
@@ -500,7 +502,7 @@ export default function EventTrackingSystem() {
 
               {/* Arrow Visualization */}
               <div className="bg-white rounded-lg shadow-sm border p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Visualización de Eventos</h3>
+                <h3 className="text-lg font-medium text-foreground mb-6">Visualización de Eventos</h3>
 
                 <div className="space-y-4">
                   {events.map((event) => {
@@ -556,32 +558,6 @@ export default function EventTrackingSystem() {
             </div>
           )}
         </div>
-        {showInstructions && (
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex">
-              <Info className="text-blue-400 mt-0.5 mr-3 w-5 h-5" />
-              <div>
-                {activeTab === "table" ? (
-                  <>
-                    <h3 className="text-sm font-medium text-blue-800">Instrucciones</h3>
-                    <p className="mt-1 text-sm text-blue-700">
-                      Usa <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + →</kbd> para cambiar a la vista
-                      visual. Los días restantes se calculan automáticamente desde la fecha actual.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-sm font-medium text-blue-800">Vista Visual</h3>
-                    <p className="mt-1 text-sm text-blue-700">
-                      Los colores y tamaños de las barras cambian según la urgencia y días restantes. Usa{" "}
-                      <kbd className="px-2 py-1 bg-white rounded text-xs">Ctrl + ←</kbd> para volver a la tabla.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

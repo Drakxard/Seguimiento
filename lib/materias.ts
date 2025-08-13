@@ -1,0 +1,51 @@
+import fs from 'fs';
+import path from 'path';
+
+export interface Materia {
+  nombre: string;
+  fecha: string;
+  progreso: number;
+  totaltareas: number;
+  minutos: number;
+}
+
+export interface MateriasState {
+  materias: Materia[];
+}
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const FILE = path.join(DATA_DIR, 'materias.json');
+
+function defaultState(): MateriasState {
+  return {
+    materias: [
+      { nombre: 'algebra', fecha: '2025-08-17', progreso: 0, totaltareas: 10, minutos: 0 },
+      { nombre: 'calculo', fecha: '2025-08-18', progreso: 0, totaltareas: 10, minutos: 0 },
+      { nombre: 'poo', fecha: '2025-08-21', progreso: 0, totaltareas: 10, minutos: 0 }
+    ]
+  };
+}
+
+export function loadMaterias(): MateriasState {
+  try {
+    if (!fs.existsSync(FILE)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+      const init = defaultState();
+      fs.writeFileSync(FILE, JSON.stringify(init, null, 2));
+      return init;
+    }
+    const raw = fs.readFileSync(FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch (e) {
+    return defaultState();
+  }
+}
+
+export function saveMaterias(state: MateriasState) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(FILE, JSON.stringify(state, null, 2));
+}
+
+export function daysLeft(fecha: string): number {
+  return Math.ceil((new Date(fecha).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
