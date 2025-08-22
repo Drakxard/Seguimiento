@@ -1,4 +1,7 @@
-  export interface Event {
+import fs from "fs"
+import path from "path"
+
+export interface Event {
   id: string
   date: string
   name: string
@@ -10,7 +13,10 @@
   isEditing: boolean
 }
 
-export let events: Event[] = [
+const DATA_DIR = path.join(process.cwd(), "data")
+const FILE = path.join(DATA_DIR, "events.json")
+
+const defaultEvents: Event[] = [
   {
     id: "1",
     date: "2025-08-17",
@@ -78,3 +84,23 @@ export let events: Event[] = [
     isEditing: false,
   },
 ]
+
+export function loadEvents(): Event[] {
+  try {
+    if (!fs.existsSync(FILE)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true })
+      fs.writeFileSync(FILE, JSON.stringify(defaultEvents, null, 2))
+      return defaultEvents
+    }
+    const raw = fs.readFileSync(FILE, "utf8")
+    return JSON.parse(raw)
+  } catch {
+    return defaultEvents
+  }
+}
+
+export function saveEvents(events: Event[]) {
+  fs.mkdirSync(DATA_DIR, { recursive: true })
+  fs.writeFileSync(FILE, JSON.stringify(events, null, 2))
+}
+
