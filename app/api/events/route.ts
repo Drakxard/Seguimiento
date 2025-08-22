@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const events = loadEvents()
   const { searchParams } = new URL(request.url)
   const id = searchParams.get("id")
+
   if (id) {
     const event = events.find((e) => e.id === id)
     if (event) return NextResponse.json(event)
