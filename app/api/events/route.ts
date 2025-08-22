@@ -1,22 +1,24 @@
 // @ts-nocheck
-import { NextResponse } from "next/server";
-import { loadEvents, saveEvents } from "../../../lib/events";
+import { NextResponse } from "next/server"
+import { loadEvents, saveEvents, Event } from "../../../lib/events"
 
 export async function GET(request: Request) {
-  const events = loadEvents();
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
+  const events = loadEvents()
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get("id")
+
   if (id) {
-    const event = events.find((e) => e.id === id);
-    if (event) return NextResponse.json(event);
-    return NextResponse.json({ message: "Not found" }, { status: 404 });
+    const event = events.find((e) => e.id === id)
+    if (event) return NextResponse.json(event)
+    return NextResponse.json({ message: "Not found" }, { status: 404 })
   }
-  return NextResponse.json(events);
+  return NextResponse.json(events)
 }
 
 export async function POST(request: Request) {
-  const { action, event } = await request.json();
-  const events = loadEvents();
+  const body = await request.json()
+  const { action, event } = body
+  const events = loadEvents()
 
   switch (action) {
     case "add":
@@ -24,30 +26,30 @@ export async function POST(request: Request) {
         ...event,
         completed: event.completed ?? 0,
         total: event.total ?? 0,
-      });
-      saveEvents(events);
-      return NextResponse.json({ status: "added" });
+      })
+      saveEvents(events)
+      return NextResponse.json({ status: "added" })
 
     case "edit":
-      const index = events.findIndex((e) => e.id === event.id);
+      const index = events.findIndex((e) => e.id === event.id)
       if (index !== -1) {
         events[index] = {
           ...events[index],
           ...event,
-        };
-        saveEvents(events);
+        }
+        saveEvents(events)
       }
-      return NextResponse.json({ status: "updated" });
+      return NextResponse.json({ status: "updated" })
 
     case "delete":
-      const idx = events.findIndex((e) => e.id === event.id);
+      const idx = events.findIndex((e) => e.id === event.id)
       if (idx !== -1) {
-        events.splice(idx, 1);
-        saveEvents(events);
+        events.splice(idx, 1)
+        saveEvents(events)
       }
-      return NextResponse.json({ status: "deleted" });
+      return NextResponse.json({ status: "deleted" })
 
     default:
-      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   }
 }

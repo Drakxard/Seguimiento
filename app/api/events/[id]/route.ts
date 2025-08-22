@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from "next/server"
-import { events } from "../../../../lib/events"
+import { loadEvents } from "../../../../lib/events"
 
 export async function GET(
   _request: Request,
@@ -14,6 +14,7 @@ export async function GET(
     ({ id } = context.params)
   }
 
+  const events = loadEvents()
   const event = events.find((e) => e.id === id)
 
   if (event) return NextResponse.json(event)
