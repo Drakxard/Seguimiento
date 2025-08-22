@@ -1,37 +1,35 @@
-{
-  "events": [
-    {
-      "id": "1",
-      "date": "2025-08-26",
-      "name": "1° seg",
-      "importance": 2,
-      "content": "Sem 1 a 2",
-      "completed": 0,
-      "total": 0,
-      "daysRemaining": 0,
-      "isEditing": false
-    },
-    {
-      "id": "2",
-      "date": "2025-08-31",
-      "name": "1° seg",
-      "importance": 2,
-      "content": "Base Cabio base",
-      "completed": 0,
-      "total": 0,
-      "daysRemaining": 0,
-      "isEditing": false
-    },
-    {
-      "id": "3",
-      "date": "2025-09-21",
-      "name": "1° Parcial",
-      "importance": 2,
-      "content": "U1 A U4",
-      "completed": 0,
-      "total": 0,
-      "daysRemaining": 0,
-      "isEditing": false
-    }
-  ]
-}
+[
+  {
+    "id": "1",
+    "date": "2025-08-26",
+    "name": "1° seg",
+    "importance": 2,
+    "content": "Sem 1 a 2",
+    "completed": 0,
+    "total": 0,
+    "daysRemaining": 0,
+    "isEditing": false
+  },
+  {
+    "id": "2",
+    "date": "2025-08-31",
+    "name": "1° seg",
+    "importance": 2,
+    "content": "Base Cabio base",
+    "completed": 0,
+    "total": 0,
+    "daysRemaining": 0,
+    "isEditing": false
+  },
+  {
+    "id": "3",
+    "date": "2025-09-21",
+    "name": "1° Parcial",
+    "importance": 2,
+    "content": "U1 A U4",
+    "completed": 0,
+    "total": 0,
+    "daysRemaining": 0,
+    "isEditing": false
+  }
+]
