@@ -10,7 +10,7 @@ export interface State {
   requestCounts: Record<string, { date: string; count: number }>;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = path.resolve(process.env.DATA_DIR || '/gestor/system');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 
 function createInitialState(): State {
@@ -91,9 +91,11 @@ function createInitialState(): State {
 export function loadState(): State {
   try {
     if (!fs.existsSync(STATE_FILE)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
       const initial = createInitialState();
-      fs.writeFileSync(STATE_FILE, JSON.stringify(initial, null, 2));
+      fs.writeFileSync(STATE_FILE, JSON.stringify(initial, null, 2), {
+        mode: 0o600,
+      });
       return initial;
     }
     const raw = fs.readFileSync(STATE_FILE, 'utf8');
@@ -105,8 +107,10 @@ export function loadState(): State {
 }
 
 export function saveState(state: State) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), {
+    mode: 0o600,
+  });
 }
 
 export function incrementRequestCount(endpoint: string): boolean {

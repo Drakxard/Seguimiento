@@ -14,7 +14,7 @@ export interface Event {
 }
 
 const DATA_DIR = path.resolve(
-  process.env.EVENTS_DIR || path.join(process.cwd(), "data"),
+  process.env.EVENTS_DIR || process.env.DATA_DIR || "/gestor/system",
 )
 const FILE = path.join(DATA_DIR, "events.json")
 

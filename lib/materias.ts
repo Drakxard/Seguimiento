@@ -13,7 +13,7 @@ export interface MateriasState {
   materias: Materia[];
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = path.resolve(process.env.DATA_DIR || '/gestor/system');
 const FILE = path.join(DATA_DIR, 'materias.json');
 
 function defaultState(): MateriasState {
@@ -29,9 +29,9 @@ function defaultState(): MateriasState {
 export function loadMaterias(): MateriasState {
   try {
     if (!fs.existsSync(FILE)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+      fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
       const init = defaultState();
-      fs.writeFileSync(FILE, JSON.stringify(init, null, 2));
+      fs.writeFileSync(FILE, JSON.stringify(init, null, 2), { mode: 0o600 });
       return init;
     }
     const raw = fs.readFileSync(FILE, 'utf8');
@@ -42,8 +42,8 @@ export function loadMaterias(): MateriasState {
 }
 
 export function saveMaterias(state: MateriasState) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(state, null, 2));
+  fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+  fs.writeFileSync(FILE, JSON.stringify(state, null, 2), { mode: 0o600 });
 }
 
 export function daysLeft(fecha: string): number {
