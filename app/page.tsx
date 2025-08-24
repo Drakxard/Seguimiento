@@ -20,7 +20,7 @@ export default function EventTrackingSystem() {
   const [events, setEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState<"table" | "visual">("table")
   const [currentDate, setCurrentDate] = useState("")
-  const [hasConsent, setHasConsent] = useState(false)
+  const [systemHandle, setSystemHandle] = useState<FileSystemDirectoryHandle | null>(null)
 
   useEffect(() => {
     updateCurrentDate()
@@ -37,24 +37,56 @@ export default function EventTrackingSystem() {
       )
     }
 
-    const consent = window.confirm("¿Permitir acceso a la configuración local?")
-    if (consent) {
-      setHasConsent(true)
-      const stored = localStorage.getItem("events")
-      if (stored) {
-        const parsed: Event[] = JSON.parse(stored)
-        setEvents(
-          parsed.map((e) => ({
-            ...e,
-            daysRemaining: e.date ? calculateDaysRemaining(e.date) : 0,
-          })),
-        )
+    const init = async () => {
+      const consent = window.confirm(
+        "¿Permitir acceso a la carpeta /gestor para configuración local?",
+      )
+      if (consent) {
+        try {
+          const dirHandle: FileSystemDirectoryHandle = await (
+            window as any
+          ).showDirectoryPicker()
+          if (dirHandle.name !== "gestor") {
+            alert("Debe seleccionar la carpeta 'gestor'.")
+            fetchEvents()
+            return
+          }
+          const systemDir = await dirHandle.getDirectoryHandle("system", {
+            create: true,
+          })
+          setSystemHandle(systemDir)
+          try {
+            const fileHandle = await systemDir.getFileHandle("events.json", {
+              create: true,
+            })
+            const file = await fileHandle.getFile()
+            const text = await file.text()
+            if (text) {
+              const parsed: Event[] = JSON.parse(text)
+              setEvents(
+                parsed.map((e) => ({
+                  ...e,
+                  daysRemaining: e.date
+                    ? calculateDaysRemaining(e.date)
+                    : 0,
+                  isEditing: false,
+                })),
+              )
+              return
+            }
+          } catch (err) {
+            // No stored events, fall back to fetching from server
+          }
+          fetchEvents()
+        } catch (error) {
+          fetchEvents()
+        }
       } else {
         fetchEvents()
       }
-    } else {
-      fetchEvents()
     }
+
+    init()
   }, [])
 
   useEffect(() => {
@@ -73,10 +105,18 @@ export default function EventTrackingSystem() {
   }, [])
 
   useEffect(() => {
-    if (hasConsent) {
-      localStorage.setItem("events", JSON.stringify(events))
+    const save = async () => {
+      if (systemHandle) {
+        const fileHandle = await systemHandle.getFileHandle("events.json", {
+          create: true,
+        })
+        const writable = await fileHandle.createWritable()
+        await writable.write(JSON.stringify(events))
+        await writable.close()
+      }
     }
-  }, [events, hasConsent])
+    save()
+  }, [events, systemHandle])
 
   const updateCurrentDate = () => {
     const today = new Date()
