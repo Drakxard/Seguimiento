@@ -13,7 +13,9 @@ export interface Event {
   isEditing: boolean
 }
 
-const DATA_DIR = path.join(process.cwd(), "data")
+const DATA_DIR = path.resolve(
+  process.env.EVENTS_DIR || path.join(process.cwd(), "data"),
+)
 const FILE = path.join(DATA_DIR, "events.json")
 
 const defaultEvents: Event[] = [
@@ -25,7 +27,7 @@ const defaultEvents: Event[] = [
     content: "Sem 1 a 2",
     completed: 0,
     total: 0,
-    daysRemaining: 0,
+    daysRemaining: 5,
     isEditing: false,
   },
   {
@@ -36,7 +38,7 @@ const defaultEvents: Event[] = [
     content: "Base Cabio base",
     completed: 0,
     total: 0,
-    daysRemaining: 0,
+    daysRemaining: 10,
     isEditing: false,
   },
   {
@@ -47,7 +49,7 @@ const defaultEvents: Event[] = [
     content: "U1 A U4",
     completed: 0,
     total: 0,
-    daysRemaining: 0,
+    daysRemaining: 31,
     isEditing: false,
   },
 ]
@@ -55,8 +57,10 @@ const defaultEvents: Event[] = [
 export function loadEvents(): Event[] {
   try {
     if (!fs.existsSync(FILE)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true })
-      fs.writeFileSync(FILE, JSON.stringify(defaultEvents, null, 2))
+      fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 })
+      fs.writeFileSync(FILE, JSON.stringify(defaultEvents, null, 2), {
+        mode: 0o600,
+      })
       return defaultEvents
     }
     const raw = fs.readFileSync(FILE, "utf8")
@@ -67,6 +71,6 @@ export function loadEvents(): Event[] {
 }
 
 export function saveEvents(events: Event[]) {
-  fs.mkdirSync(DATA_DIR, { recursive: true })
-  fs.writeFileSync(FILE, JSON.stringify(events, null, 2))
+  fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 })
+  fs.writeFileSync(FILE, JSON.stringify(events, null, 2), { mode: 0o600 })
 }
